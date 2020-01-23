@@ -6,7 +6,6 @@ import os
 import json
 import time
 path_to_watch = "../images"
-before = dict([(f, None) for f in os.listdir(path_to_watch)])
 
 
 class Rectangle:
@@ -37,56 +36,63 @@ def process(file):
     json_file_name = "../images/json/" + file + ".json"
     detected_file_name = "../images/detected/" + file + ".jpg"
     processed_file_name = "../images/processed/" + file + ".jpg"
+    person_file_name = "../images/person/" + file + ".jpg"
 
-    print("reading " + filename)
+    print("READING: " + filename)
     image = cv2.imread(filename)
+    print("-- CROPPING")
     image = image[400:1440, 700:2300]
+    print("-- DETECTING COMMON OBJECTS")
     boxes, labels, conf = cv.detect_common_objects(image, model="yolov3")
+
+    data = {
+        "person_found": False,
+        "person_found_in_rectangle": False
+    }
 
     for i in range(len(labels)):
         label = labels[i]
         if label == "person":
-            print("Found person")
+            data["person_found"] = True
+            print("--- FOUND PERSON")
+            cv2.imwrite(person_file_name, image)
             box = boxes[i]
             rect = Rectangle((box[0], box[1]), (box[2], box[3]))
-            print("Checking leftBox")
-            print(rect.overlaps(leftBox))
-            print("Checking rightBox")
-            print(rect.overlaps(rightBox))
-            print("Checking backBox")
-            print(rect.overlaps(backBox))
-            print(boxes[i])
-            print(conf[i])
+            left = rect.overlaps(leftBox)
+            right = rect.overlaps(rightBox)
+            back = rect.overlaps(backBox)
 
-    print(boxes)
-    print(labels)
-    print(conf)
+            print("---- Checking leftBox", left)
+            print("---- Checking rightBox", right)
+            print("---- Checking backBox", back)
 
-    # out = draw_bbox(image, boxes, labels, conf)
-    # print("writing " + detected_file_name)
-    # cv2.imwrite(detected_file_name, out)
-    # data = {}
-    # data["labels"] = labels
-    # data["boxes"] = boxes
+            if ((left and back) or (right and back)):
+                print("----- PERSON IN THE RECTANGLE", conf[i])
+                data["person_found_in_rectangle"] = True
+                out = draw_bbox(image, [box], [label], [conf[i]])
+                cv2.imwrite(detected_file_name, out)
 
-    # print("writing " + json_file_name)
-    # with open(json_file_name, "w") as outfile:
-    #     json.dump(data, outfile)
+    print("-- RENAMING " + filename + " TO " + processed_file_name)
+    os.rename(filename, processed_file_name)
 
-    # print("renaming " + filename + " to " + processed_file_name)
-    # os.rename(filename, processed_file_name)
+    data["labels"] = labels
+    data["boxes"] = boxes
+
+    print("-- WRITING " + json_file_name)
+    with open(json_file_name, "w") as outfile:
+        json.dump(data, outfile, sort_keys=True,
+                  indent=4, separators=(',', ': '))
 
 
-# while 1:
-#     time.sleep(5)
-#     after = dict([(f, None) for f in os.listdir(path_to_watch)])
-#     added = [f for f in after if not f in before]
+while 1:
+    for f in os.listdir(path_to_watch):
+        ext = os.path.splitext(f)[1]
+        if ext == ".jpg":
+            filename = os.path.splitext(f)[0]
+            process(filename)
 
-#     if len(added) > 0:
-#         filename = os.path.splitext(added[0])[0]
-#         print("PROCESSING " + filename)
-#         process(filename)
+    print("Sleeping for 5 seconds")
+    time.sleep(5)
 
-#     before = after
-
-process("bigtexan_1579743045_00031")
+    # print("PROCESSING " + filename)
+    # process(filename)

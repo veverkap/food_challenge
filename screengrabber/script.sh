@@ -12,4 +12,4 @@ url=$(curl -s https://v.angelcam.com/iframe\?v\=9klzdgn2y4\&autoplay\=1 | grep '
 echo "FOUND $url"
 echo "GRABBING SCREENSHOTS"
 
-ffmpeg -i $url -vf fps=1/30 $data_dir/bigtexan_$(date +%s)_%05d.jpg -hide_banner
+ffmpeg -i $url -vf fps=1/10 $data_dir/bigtexan_$(date +%s)_%05d.jpg -hide_banner
