@@ -91,8 +91,8 @@ while 1:
             filename = os.path.splitext(f)[0]
             process(filename)
 
-    print("Sleeping for 5 seconds")
-    time.sleep(5)
+    print("Sleeping for 30 seconds")
+    time.sleep(30)
 
     # print("PROCESSING " + filename)
     # process(filename)
