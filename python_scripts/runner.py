@@ -1,6 +1,7 @@
 import cv2
 import cvlib as cv
 import collections
+import subprocess
 from cvlib.object_detection import draw_bbox
 import os
 import json
@@ -85,6 +86,8 @@ def process(file):
 
 
 while 1:
+    rc = subprocess.call("../screengrabber/script.sh", shell=True)
+    print(rc)
     for f in os.listdir(path_to_watch):
         ext = os.path.splitext(f)[1]
         if ext == ".jpg":
@@ -93,6 +96,3 @@ while 1:
 
     print("Sleeping for 30 seconds")
     time.sleep(30)
-
-    # print("PROCESSING " + filename)
-    # process(filename)
