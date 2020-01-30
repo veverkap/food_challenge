@@ -11,10 +11,39 @@ import time
 from rectangle import Rectangle
 
 
+def backup_all_things():
+    print("Backing up videos")
+    # for file in os.listdir(videos_folder):
+    #     full_file = videos_folder + file
+    #     print(" - backing up ", full_file)
+    #     rc = subprocess.call("b2 upload_file meatsweats " +
+    #                          full_file + " videos/" + file, shell=True)
+    #     print(" - deleting ", full_file)
+    #     os.remove(full_file)
+
+    print("Backing up person images")
+    person_folder = images_folder + "person/"
+    for file in os.listdir(person_folder):
+        full_file = person_folder + file
+        print(" - backing up ", full_file)
+        rc = subprocess.call("b2 upload_file meatsweats " +
+                             full_file + " images/person/" + file, shell=True)
+        print(" - deleting ", full_file)
+        os.remove(full_file)
+
+    print("Backing up detected images")
+    detected_folder = images_folder + "detected/"
+    for file in os.listdir(detected_folder):
+        full_file = detected_folder + file
+        print(" - backing up ", full_file)
+        # rc = subprocess.call("b2 upload_file meatsweats " +
+        #                      full_file + " videos/" + file, shell=True)
+        # print(" - deleting ", full_file)
+        # os.remove(full_file)
+
+
 def backup_video(local_url, segment):
-    rc = subprocess.call("b2 upload_file --noProgress meatsweats " +
-                         local_url + " ../videos/" + segment, shell=True)
-    os.remove(local_url)
+
     return rc
 
 
@@ -126,18 +155,19 @@ images_folder = "./images/"
 
 url = "https://v.angelcam.com/iframe?v=9klzdgn2y4"
 
-while 1:
-    base, segments = load_ts_segments(url)
-    for segment in segments:
-        remote_url = (base + "/" + segment)
-        print("Loading TS Segment ", remote_url)
-        video_url = videos_folder + segment
+backup_all_things()
+# while 1:
+# backup_all_things()
+# base, segments = load_ts_segments(url)
+# for segment in segments:
+#     remote_url = (base + "/" + segment)
+#     print("Loading TS Segment ", remote_url)
+#     video_url = videos_folder + segment
 
-        if download_url(remote_url, video_url) == 0:
-            print("Processing file")
-            image_url = snapshot_video(video_url)
-            process(image_url)
-            backup_video(video_url, segment)
+#     if download_url(remote_url, video_url) == 0:
+#         print("Processing file")
+#         image_url = snapshot_video(video_url)
+#         process(image_url)
 
-    print("Sleeping for 30 seconds")
-    time.sleep(5)
+# print("Sleeping for 30 seconds")
+# time.sleep(5)
