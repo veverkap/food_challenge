@@ -1,13 +1,36 @@
-import re
+from cvlib.object_detection import draw_bbox
 from urllib.request import urlopen
+import collections
 import cv2
 import cvlib as cv
-import collections
-import subprocess
-from cvlib.object_detection import draw_bbox
-import os
 import json
+import os
+import re
+import subprocess
 import time
+from rectangle import Rectangle
+
+
+def backup_video(local_url, segment):
+    rc = subprocess.call("b2 upload_file --noProgress meatsweats " +
+                         local_url + " ../videos/" + segment, shell=True)
+    os.remove(local_url)
+    return rc
+
+
+def download_url(source, destination):
+    print("Downloading ", source, " to ", destination)
+    rc = subprocess.call("wget -q -nc -O " +
+                         destination + " " + source, shell=True)
+    return rc
+
+
+def snapshot_video(video_url):
+    image_url = video_url.replace(
+        videos_folder, images_folder).replace(".ts", ".jpg")
+    rc = subprocess.call("ffmpeg -hide_banner -loglevel panic -i " +
+                         video_url + " -vframes 1 -f image2 " + image_url, shell=True)
+    return image_url
 
 
 def find_segments(string):
@@ -33,30 +56,12 @@ def load_ts_segments(url):
     return base, segments
 
 
-class Rectangle:
-    def __init__(self, pt1, pt2):
-        self.set_points(pt1, pt2)
-
-    def set_points(self, pt1, pt2):
-        (x1, y1) = pt1
-        (x2, y2) = pt2
-        self.left = min(x1, x2)
-        self.top = min(y1, y2)
-        self.right = max(x1, x2)
-        self.bottom = max(y1, y2)
-
-    def overlaps(self, other):
-        """Return true if a rectangle overlaps this rectangle."""
-        return (self.right > other.left and self.left < other.right and
-                self.top < other.bottom and self.bottom > other.top)
-
-
-def process(file):
-    filename = "../images/" + file + ".jpg"
-    json_file_name = "../images/json/" + file + ".json"
-    detected_file_name = "../images/detected/" + file + ".jpg"
-    processed_file_name = "../images/processed/" + file + ".jpg"
-    person_file_name = "../images/person/" + file + ".jpg"
+def process(filename):
+    json_file_name = filename.replace(
+        "images/", "json/").replace(".jpg", ".json")
+    detected_file_name = filename.replace("images/", "images/detected/")
+    processed_file_name = filename.replace("images/", "images/processed/")
+    person_file_name = filename.replace("images/", "images/person/")
 
     print("READING: " + filename)
     image = cv2.imread(filename)
@@ -67,7 +72,10 @@ def process(file):
 
     data = {
         "person_found": False,
-        "person_found_in_rectangle": False
+        "person_found_in_rectangle": False,
+        "person_found_in_left_box": False,
+        "person_found_in_right_box": False,
+        "person_found_in_back_box": False,
     }
 
     for i in range(len(labels)):
@@ -78,9 +86,14 @@ def process(file):
             cv2.imwrite(person_file_name, image)
             box = boxes[i]
             rect = Rectangle((box[0], box[1]), (box[2], box[3]))
+
             left = rect.overlaps(leftBox)
             right = rect.overlaps(rightBox)
             back = rect.overlaps(backBox)
+
+            data["person_found_in_left_box"] = left
+            data["person_found_in_right_box"] = right
+            data["person_found_in_back_box"] = back
 
             print("---- Checking leftBox", left)
             print("---- Checking rightBox", right)
@@ -107,22 +120,24 @@ def process(file):
 leftBox = Rectangle((703, 561), (1176, 1406))
 rightBox = Rectangle((1778, 561), (2302, 1406))
 backBox = Rectangle((703, 561), (2300, 920))
-path_to_watch = "../images"
+
+videos_folder = "./videos/"
+images_folder = "./images/"
+
 url = "https://v.angelcam.com/iframe?v=9klzdgn2y4"
 
 while 1:
     base, segments = load_ts_segments(url)
     for segment in segments:
-        segment_url = (base + "/" + segment)
-        rc = subprocess.call("wget -q -nc -O ../videos/" +
-                             segment + " " + segment_url, shell=True)
-        if rc == 0:
-            rc = subprocess.call("ffmpeg -hide_banner -loglevel panic -i ../videos/" +
-                                 segment + " -vframes 1 -f image2 ../images/" + segment + ".jpg", shell=True)
-            print(rc)
-            rc = subprocess.call("b2 upload_file meatsweats ../videos/" +
-                                 segment + " ../videos/" + segment, shell=True)
-            print(rc)
+        remote_url = (base + "/" + segment)
+        print("Loading TS Segment ", remote_url)
+        video_url = videos_folder + segment
+
+        if download_url(remote_url, video_url) == 0:
+            print("Processing file")
+            image_url = snapshot_video(video_url)
+            process(image_url)
+            backup_video(video_url, segment)
 
     print("Sleeping for 30 seconds")
     time.sleep(5)
