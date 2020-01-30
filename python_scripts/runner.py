@@ -1,3 +1,5 @@
+import re
+from urllib.request import urlopen
 import cv2
 import cvlib as cv
 import collections
@@ -6,7 +8,29 @@ from cvlib.object_detection import draw_bbox
 import os
 import json
 import time
-path_to_watch = "../images"
+
+
+def find_segments(string):
+    segments = re.findall('segment-\d*\.ts', string)
+    return segments
+
+
+def load_url(url):
+    f = urlopen(url)
+    return f.read().decode("utf-8")
+
+
+def load_ts_segments(url):
+    html = load_url(url)
+
+    playlist_url = re.findall('(https?://.*\.m3u8\?token=.*)\'', html)[0]
+    print("found playlist_url = ", playlist_url)
+
+    base = "/".join(playlist_url.split("/")[:-1])
+    print("base = ", base)
+    values = load_url(playlist_url)
+    segments = find_segments(values)
+    return base, segments
 
 
 class Rectangle:
@@ -25,11 +49,6 @@ class Rectangle:
         """Return true if a rectangle overlaps this rectangle."""
         return (self.right > other.left and self.left < other.right and
                 self.top < other.bottom and self.bottom > other.top)
-
-
-leftBox = Rectangle((703, 561), (1176, 1406))
-rightBox = Rectangle((1778, 561), (2302, 1406))
-backBox = Rectangle((703, 561), (2300, 920))
 
 
 def process(file):
@@ -85,14 +104,25 @@ def process(file):
                   indent=4, separators=(',', ': '))
 
 
+leftBox = Rectangle((703, 561), (1176, 1406))
+rightBox = Rectangle((1778, 561), (2302, 1406))
+backBox = Rectangle((703, 561), (2300, 920))
+path_to_watch = "../images"
+url = "https://v.angelcam.com/iframe?v=9klzdgn2y4"
+
 while 1:
-    rc = subprocess.call("../screengrabber/script.sh", shell=True)
-    print(rc)
-    for f in os.listdir(path_to_watch):
-        ext = os.path.splitext(f)[1]
-        if ext == ".jpg":
-            filename = os.path.splitext(f)[0]
-            process(filename)
+    base, segments = load_ts_segments(url)
+    for segment in segments:
+        segment_url = (base + "/" + segment)
+        rc = subprocess.call("wget -q -nc -O ../videos/" +
+                             segment + " " + segment_url, shell=True)
+        if rc == 0:
+            rc = subprocess.call("ffmpeg -hide_banner -loglevel panic -i ../videos/" +
+                                 segment + " -vframes 1 -f image2 ../images/" + segment + ".jpg", shell=True)
+            print(rc)
+            rc = subprocess.call("b2 upload_file meatsweats ../videos/" +
+                                 segment + " ../videos/" + segment, shell=True)
+            print(rc)
 
     print("Sleeping for 30 seconds")
-    time.sleep(30)
+    time.sleep(5)
