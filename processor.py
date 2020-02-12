@@ -40,6 +40,9 @@ class Processor:
         boxes, labels, conf = cv.detect_common_objects(
             self.image, model="yolov3")
 
+        self.data["labels"] = labels
+        self.data["boxes"] = boxes
+
         for i in range(len(labels)):
             label = labels[i]
             if label == "person":
@@ -69,17 +72,19 @@ class Processor:
                     cv2.imwrite(self.detected_file_name, out)
                     Slacker.postToSlack(self.detected_file_name)
                     Slacker.postToTwitter(self.detected_file_name)
-            else:
-                print(f"SKIPPING {label}")
 
-        print("-- RENAMING " + self.filename +
-              " TO " + self.processed_file_name)
-        os.rename(self.filename, self.processed_file_name)
+                    with open(self.json_file_name, "w") as outfile:
+                        json.dump(self.data, outfile, sort_keys=True,
+                                  indent=4, separators=(',', ': '))
 
-        self.data["labels"] = labels
-        self.data["boxes"] = boxes
+                # print("-- RENAMING " + self.filename +
+                #       " TO " + self.processed_file_name)
 
-        print("-- WRITING " + self.json_file_name)
-        with open(self.json_file_name, "w") as outfile:
-            json.dump(self.data, outfile, sort_keys=True,
-                      indent=4, separators=(',', ': '))
+                # os.rename(self.filename, self.processed_file_name)
+                # print("-- WRITING " + self.json_file_name)
+
+        print("-- REMOVING " + self.filename)
+        try:
+            os.remove(self.filename)
+        except:
+            print("Error while deleting file ", self.filename)

@@ -72,7 +72,10 @@ while 1:
             print("Processing file")
             image_url = snapshot_video(video_url)
             process(image_url)
-
+            try:
+                os.remove(video_url)
+            except:
+                print("Error while deleting file ", video_url)
     print("Sleeping for 30 seconds")
     time.sleep(30)
 # # process("./images/segment-48659.jpg")
