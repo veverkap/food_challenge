@@ -1,45 +1,17 @@
+
 from cvlib.object_detection import draw_bbox
 from urllib.request import urlopen
 import collections
-import cv2
-import cvlib as cv
+# import cv2
+# import cvlib as cv
 import json
 import os
 import re
 import subprocess
 import time
 from rectangle import Rectangle
-
-
-# def backup_all_things():
-# print("Backing up videos")
-# for file in os.listdir(videos_folder):
-#     full_file = videos_folder + file
-#     print(" - backing up ", full_file)
-#     rc = subprocess.call("b2 upload_file meatsweats " +
-#                          full_file + " videos/" + file, shell=True)
-#     print(" - deleting ", full_file)
-#     os.remove(full_file)
-
-# print("Backing up person images")
-# person_folder = images_folder + "person/"
-# for file in os.listdir(person_folder):
-#     full_file = person_folder + file
-#     print(" - backing up ", full_file)
-#     rc = subprocess.call("b2 upload_file meatsweats " +
-#                          full_file + " images/person/" + file, shell=True)
-#     print(" - deleting ", full_file)
-#     os.remove(full_file)
-
-# print("Backing up detected images")
-# detected_folder = images_folder + "detected/"
-# for file in os.listdir(detected_folder):
-#     full_file = detected_folder + file
-#     print(" - backing up ", full_file)
-# rc = subprocess.call("b2 upload_file meatsweats " +
-#                      full_file + " videos/" + file, shell=True)
-# print(" - deleting ", full_file)
-# os.remove(full_file)
+from slacker import Slacker
+from processor import Processor
 
 
 def download_url(source, destination):
@@ -81,69 +53,8 @@ def load_ts_segments(url):
 
 
 def process(filename):
-    json_file_name = filename.replace(
-        "images/", "json/").replace(".jpg", ".json")
-    detected_file_name = filename.replace("images/", "images/detected/")
-    processed_file_name = filename.replace("images/", "images/processed/")
-    person_file_name = filename.replace("images/", "images/person/")
+    Processor(filename).process()
 
-    print("READING: " + filename)
-    image = cv2.imread(filename)
-    print("-- CROPPING")
-    image = image[400:1440, 700:2300]
-    print("-- DETECTING COMMON OBJECTS")
-    boxes, labels, conf = cv.detect_common_objects(image, model="yolov3")
-
-    data = {
-        "person_found": False,
-        "person_found_in_rectangle": False,
-        "person_found_in_left_box": False,
-        "person_found_in_right_box": False,
-        "person_found_in_back_box": False,
-    }
-
-    for i in range(len(labels)):
-        label = labels[i]
-        if label == "person":
-            data["person_found"] = True
-            print("--- FOUND PERSON")
-            cv2.imwrite(person_file_name, image)
-            box = boxes[i]
-            rect = Rectangle((box[0], box[1]), (box[2], box[3]))
-
-            left = rect.overlaps(leftBox)
-            right = rect.overlaps(rightBox)
-            back = rect.overlaps(backBox)
-
-            data["person_found_in_left_box"] = left
-            data["person_found_in_right_box"] = right
-            data["person_found_in_back_box"] = back
-
-            print("---- Checking leftBox", left)
-            print("---- Checking rightBox", right)
-            print("---- Checking backBox", back)
-
-            if ((left and back) or (right and back)):
-                print("----- PERSON IN THE RECTANGLE", conf[i])
-                data["person_found_in_rectangle"] = True
-                out = draw_bbox(image, [box], [label], [conf[i]])
-                cv2.imwrite(detected_file_name, out)
-
-    print("-- RENAMING " + filename + " TO " + processed_file_name)
-    os.rename(filename, processed_file_name)
-
-    data["labels"] = labels
-    data["boxes"] = boxes
-
-    print("-- WRITING " + json_file_name)
-    with open(json_file_name, "w") as outfile:
-        json.dump(data, outfile, sort_keys=True,
-                  indent=4, separators=(',', ': '))
-
-
-leftBox = Rectangle((703, 561), (1176, 1406))
-rightBox = Rectangle((1778, 561), (2302, 1406))
-backBox = Rectangle((703, 561), (2300, 920))
 
 videos_folder = "./videos/"
 images_folder = "./images/"
@@ -164,3 +75,4 @@ while 1:
 
     print("Sleeping for 30 seconds")
     time.sleep(30)
+# # process("./images/segment-48659.jpg")
