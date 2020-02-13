@@ -3,7 +3,7 @@ import cv2
 import cvlib as cv
 import os
 import json
-
+import logging
 from rectangle import Rectangle
 from slacker import Slacker
 
@@ -36,7 +36,7 @@ class Processor:
         return f"Processor for {self.filename} {str(self.data)}"
 
     def process(self):
-        print("PROCESSING")
+        logging.info("PROCESSING")
         boxes, labels, conf = cv.detect_common_objects(
             self.image, model="yolov3")
 
@@ -48,7 +48,7 @@ class Processor:
             if label == "person":
                 confidence = conf[i]
                 self.data["person_found"] = True
-                print(f"--- FOUND PERSON with {confidence}")
+                logging.info("--- FOUND PERSON with %s", confidence)
                 cv2.imwrite(self.person_file_name, self.image)
                 box = boxes[i]
                 rect = Rectangle((box[0], box[1]), (box[2], box[3]))
@@ -61,12 +61,12 @@ class Processor:
                 self.data["person_found_in_right_box"] = right
                 self.data["person_found_in_back_box"] = back
 
-                print("---- Checking leftBox", left)
-                print("---- Checking rightBox", right)
-                print("---- Checking backBox", back)
+                logging.info("---- Checking leftBox %s", left)
+                logging.info("---- Checking rightBox %s", right)
+                logging.info("---- Checking backBox %s", back)
 
                 if ((left and back) or (right and back)):
-                    print("----- PERSON IN THE RECTANGLE", conf[i])
+                    logging.info("----- PERSON IN THE RECTANGLE %s", conf[i])
                     self.data["person_found_in_rectangle"] = True
                     out = draw_bbox(self.image, [box], [label], [conf[i]])
                     cv2.imwrite(self.detected_file_name, out)
@@ -83,7 +83,7 @@ class Processor:
                 # os.rename(self.filename, self.processed_file_name)
                 # print("-- WRITING " + self.json_file_name)
 
-        print("-- REMOVING " + self.filename)
+        logging.info("-- REMOVING  %s", self.filename)
         try:
             os.remove(self.filename)
         except:

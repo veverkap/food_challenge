@@ -2,6 +2,8 @@
 from cvlib.object_detection import draw_bbox
 from urllib.request import urlopen
 import collections
+import logging
+import sys
 # import cv2
 # import cvlib as cv
 import json
@@ -14,8 +16,19 @@ from slacker import Slacker
 from processor import Processor
 
 
+root = logging.getLogger()
+root.setLevel(logging.INFO)
+
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+root.addHandler(handler)
+
+
 def download_url(source, destination):
-    print("Downloading ", source, " to ", destination)
+    logging.info("Downloading %s to %s", source, destination)
     rc = subprocess.call("wget -q -nc -O " +
                          destination + " " + source, shell=True)
     return rc
@@ -43,10 +56,10 @@ def load_ts_segments(url):
     html = load_url(url)
 
     playlist_url = re.findall('(https?://.*\.m3u8\?token=.*)\'', html)[0]
-    print("found playlist_url = ", playlist_url)
+    logging.info("found playlist_url = %s", playlist_url)
 
     base = "/".join(playlist_url.split("/")[:-1])
-    print("base = ", base)
+    logging.info("base = %s", base)
     values = load_url(playlist_url)
     segments = find_segments(values)
     return base, segments
@@ -65,17 +78,17 @@ while 1:
     base, segments = load_ts_segments(url)
     for segment in segments:
         remote_url = (base + "/" + segment)
-        print("Loading TS Segment ", remote_url)
+        logging.info("Loading TS Segment %s", remote_url)
         video_url = videos_folder + segment
 
         if download_url(remote_url, video_url) == 0:
-            print("Processing file")
+            logging.info("Processing file")
             image_url = snapshot_video(video_url)
             process(image_url)
             try:
                 os.remove(video_url)
             except:
                 print("Error while deleting file ", video_url)
-    print("Sleeping for 30 seconds")
+    logging.info("Sleeping for 30 seconds")
     time.sleep(30)
 # # process("./images/segment-48659.jpg")
