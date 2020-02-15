@@ -1,2 +1,3 @@
 images/bigtexan_*.jpg
 .env
+__pycache__/

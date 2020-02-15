@@ -3,3 +3,5 @@ tensorflow
 cvlib
 slackclient
 python-twitter
+falcon
+gunicorn
