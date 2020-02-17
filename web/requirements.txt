@@ -1,0 +1,8 @@
+cvlib
+fastapi
+gunicorn
+numpy
+opencv-python
+python-multipart
+tensorflow
+uvicorn

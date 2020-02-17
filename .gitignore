@@ -1,3 +1,4 @@
-images/bigtexan_*.jpg
+images/*.jpg
 .env
 __pycache__/
+videos/*.ts
