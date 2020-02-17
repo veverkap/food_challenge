@@ -1,17 +1,17 @@
-# pull official base image
-FROM python:3.7.6
+FROM python:3.7
 
-# set work directory
-WORKDIR /usr/src/app
+COPY ./app/requirements.txt /app/requirements.txt
 
-# set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+RUN pip install -r /app/requirements.txt
 
-# install dependencies
-RUN pip install --upgrade pip
-COPY ./requirements.txt /usr/src/app/requirements.txt
-RUN pip install -r requirements.txt
+COPY ./app /app
 
-# copy project
-COPY . /usr/src/app/
+RUN mkdir -p /root/.cvlib/object_detection/yolo/yolov3
+
+# COPY ./yolov3/yolov3.weights /root/.cvlib/object_detection/yolo/yolov3
+
+COPY ./yolov3/yolov3.cfg /root/.cvlib/object_detection/yolo/yolov3
+
+COPY ./yolov3/yolov3_classes.txt /root/.cvlib/object_detection/yolo/yolov3
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]

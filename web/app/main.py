@@ -1,5 +1,7 @@
 from fastapi import FastAPI, File, UploadFile
-from detecting_resource import DetectingResource
+from app.detecting_resource import DetectingResource
+import os
+
 app = FastAPI()
 
 

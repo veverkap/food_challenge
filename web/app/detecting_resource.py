@@ -1,5 +1,5 @@
 from cvlib.object_detection import draw_bbox
-from rectangle import Rectangle
+from app.rectangle import Rectangle
 
 import cv2
 import cvlib as cv
@@ -23,8 +23,7 @@ class DetectingResource:
 
         image = image_full[400:1440, 700:2300]
 
-        boxes, labels, confidences = cv.detect_common_objects(
-            image, model="yolov3")
+        boxes, labels, confidences = cv.detect_common_objects(image)
 
         person_found_in_left_box = False
         person_found_in_right_box = False
