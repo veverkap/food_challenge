@@ -1,8 +1,8 @@
 FROM python:3.7
 
-COPY ./app/requirements.txt /app/requirements.txt
+RUN pip install fastapi uvicorn
 
-RUN pip install -r /app/requirements.txt
+EXPOSE 80
 
 COPY ./app /app
 
