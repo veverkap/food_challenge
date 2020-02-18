@@ -7,7 +7,7 @@ app = FastAPI()
 
 @app.get("/")
 def read_root():
-    return {"Hello": "sdfdsa"}
+    return {"Hello": "WE ARE ONLINE"}
 
 
 @app.post("/detect")

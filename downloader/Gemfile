@@ -1,0 +1,4 @@
+source "https://rubygems.org" do
+  gem "down", "~> 5.0"
+  gem "aws-sdk-s3"
+end

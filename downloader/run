@@ -1,0 +1,113 @@
+#!/usr/bin/env ruby
+#coding:utf-8
+require "rubygems"
+require "bundler/setup"
+require "down"
+require "aws-sdk-s3"
+
+Aws.config.update(
+  endpoint: ENV["MINIO_ENDPOINT"],
+  access_key_id: ENV["MINIO_ACCESS_KEY_ID"],
+  secret_access_key: ENV["MINIO_SECRET_ACCESS_KEY"],
+  force_path_style: true,
+  region: 'us-east-1'
+)
+class Downloader
+  attr_reader :url
+
+  def minio_client
+    @minio_client ||= Aws::S3::Client.new
+  end
+
+  def initialize(url = "https://v.angelcam.com/iframe?v=9klzdgn2y4")
+    @url = url
+    load_ts_segments()
+  end
+
+  def load_ts_segments
+    html = read_url(url)
+    playlist_url = html.match(/(https?:\/\/.*\.m3u8\?token=.*)'/).captures.first
+    base = playlist_url.gsub(playlist_url.split("/")[-1], "")
+    puts "base = #{base}"
+    item = read_url(playlist_url)
+    item.scan(/segment-\d*\.ts/).each do |tsfile|
+      download_url(base + tsfile, "../videos/#{tsfile}")
+    end
+#     values = load_url(playlist_url)
+#     segments = find_segments(values)
+#     return base, segments
+  end
+
+  def upload_to_minio(file)
+    minio_client.put_object(
+      key: 'testobject',
+      body: 'Hello from MinIO!!',
+      bucket: 'meatsweats',
+      content_type: 'text/plain'
+    )
+  end
+
+  def download_url(source, destination)
+    Down.download(source, destination: destination)
+  end
+
+  def read_url(source)
+    Down.download(source).read
+  end
+end
+Downloader.new
+# def snapshot_video(video_url):
+#     image_url = video_url.replace(
+#         videos_folder, images_folder).replace(".ts", ".jpg")
+#     rc = subprocess.call("ffmpeg -hide_banner -loglevel panic -i " +
+#                          video_url + " -vframes 1 -f image2 " + image_url, shell=True)
+#     return image_url
+
+
+# def find_segments(string):
+#     segments = re.findall('segment-\d*\.ts', string)
+#     return segments
+
+
+
+
+# def load_ts_segments(url):
+#     html = load_url(url)
+
+#     playlist_url = re.findall('(https?://.*\.m3u8\?token=.*)\'', html)[0]
+#     logging.info("found playlist_url = %s", playlist_url)
+
+#     base = "/".join(playlist_url.split("/")[:-1])
+#     logging.info("base = %s", base)
+#     values = load_url(playlist_url)
+#     segments = find_segments(values)
+#     return base, segments
+
+
+# def process(filename):
+#     Processor(filename).process()
+
+
+# videos_folder = "./videos/"
+# images_folder = "./images/"
+
+# url = "https://v.angelcam.com/iframe?v=9klzdgn2y4"
+
+# while 1:
+#     base, segments = load_ts_segments(url)
+#     for segment in segments:
+#         remote_url = (base + "/" + segment)
+#         logging.info("Loading TS Segment %s", remote_url)
+#         video_url = videos_folder + segment
+
+#         if download_url(remote_url, video_url) == 0:
+#             logging.info("Processing file")
+#             image_url = snapshot_video(video_url)
+#             process(image_url)
+#             try:
+#                 os.remove(video_url)
+#             except:
+#                 print("Error while deleting file ", video_url)
+#     logging.info("Sleeping for 30 seconds")
+#     time.sleep(30)
+# # # process("./images/segment-48659.jpg")
