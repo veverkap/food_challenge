@@ -1,6 +1,6 @@
 cvlib
 fastapi
-gunicorn
+uvicorn
 numpy
 opencv-python
 python-multipart

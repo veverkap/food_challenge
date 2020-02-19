@@ -2,10 +2,13 @@
 #coding:utf-8
 require "rubygems"
 require "bundler/setup"
-require "down"
+require "down/http"
 require "aws-sdk-s3"
 require "streamio-ffmpeg"
 require "logger"
+require "json"
+require "pp"
+require "slack-ruby-client"
 
 Aws.config.update(
   endpoint: ENV["MINIO_ENDPOINT"],
@@ -15,6 +18,9 @@ Aws.config.update(
   region: 'us-east-1'
 )
 
+Slack.configure do |config|
+  config.token = ENV['SLACK_API_TOKEN']
+end
 
 LOGGER = Logger.new(STDOUT)
 
@@ -25,6 +31,10 @@ class Downloader
     @minio_client ||= Aws::S3::Client.new
   end
 
+  def slack_client
+    @client ||= Slack::Web::Client.new
+  end
+
   def initialize(frame_url = "https://v.angelcam.com/iframe?v=9klzdgn2y4")
     @frame_url = frame_url
   end
@@ -32,17 +42,45 @@ class Downloader
   def process
     segments = load_ts_segments()
     LOGGER.info " - segments = #{segments}"
-    segments.each do |segment_file|
+    destinations = segments.map do |segment_file|
       destination = download_video(segment_file)
-      upload_to_minio(destination)
-
-      screenshot = snapshot_video(destination, segment_file)
-      process_screenshot(screenshot)
-      upload_to_minio(screenshot)
-
-      File.delete(destination)
-      File.delete(screenshot)
+      upload_file_to_minio(destination)
+      destination
     end
+
+    destination = destinations.sample
+    LOGGER.info " - sampled and processing #{destination}"
+
+    screenshot = snapshot_video(destination)
+    upload_file_to_minio(screenshot)
+
+    json = process_screenshot(screenshot)
+
+    LOGGER.info "person_found_in_left_box  = #{json["person_found_in_left_box"]}"
+    LOGGER.info "person_found_in_right_box = #{json["person_found_in_right_box"]}"
+    LOGGER.info "person_found_in_right_box = #{json["person_found_in_right_box"]}"
+    LOGGER.info "person_found_in_rectangle = #{json["person_found_in_rectangle"]}"
+
+    if json["person_found_in_rectangle"]
+      slack_client.files_upload(
+        channels: '#talk-big-texan',
+        as_user: false,
+        file: Faraday::UploadIO.new(screenshot, 'image/jpeg'),
+        title: 'My Avatar',
+        filename: 'avatar.jpg',
+        initial_comment: 'I see sweaty people'
+      )
+    end
+
+    upload_json_to_minio(destination, json)
+
+    destinations.each do |destination|
+      LOGGER.info " - deleting #{destination}"
+      File.delete(destination)
+    end
+    File.delete(screenshot)
+  rescue StandardError => error
+    LOGGER.error "Whoops, something bad happened #{error}"
   end
 
   def load_ts_segments
@@ -62,15 +100,15 @@ class Downloader
     destination
   end
 
-  def snapshot_video(destination, segment_file)
-    screenshot = "../images/#{segment_file.gsub(".ts", ".jpg")}"
+  def snapshot_video(destination)
+    screenshot = "../images/#{destination.split("/").last.gsub(".ts", ".jpg")}"
     LOGGER.info " - snapshot_video: #{screenshot}"
     movie = FFMPEG::Movie.new(destination)
     movie.screenshot(screenshot)
     screenshot
   end
 
-  def upload_to_minio(destination)
+  def upload_file_to_minio(destination)
     filename = destination.split("/").last
     content_type = "video/MP2T"
     folder = "video"
@@ -83,8 +121,17 @@ class Downloader
     contents = File.read(destination)
     key = "#{Time.now.strftime("%F")}/#{folder}/#{filename}"
 
-    LOGGER.info " - uploading #{destination} to #{key} with content_type #{content_type}"
+    upload_to_minio(key, contents, content_type)
+  end
 
+  def upload_json_to_minio(destination, json)
+    filename = destination.split("/").last.gsub(".ts", ".json")
+    key = "#{Time.now.strftime("%F")}/json/#{filename}"
+    upload_to_minio(key, JSON.dump(json), "application/json")
+  end
+
+  def upload_to_minio(key, contents, content_type)
+    LOGGER.info " - uploading to #{key} with content_type #{content_type}"
     minio_client.put_object(
       key: key,
       body: contents,
@@ -94,21 +141,32 @@ class Downloader
   end
 
   def process_screenshot(screenshot)
+    response = HTTP.post("http://127.0.0.1:8000/detect", :form => {
+      :image   => HTTP::FormData::File.new(screenshot)
+    })
+    JSON.load(response.body)
   end
 
   def download_url(source, destination)
     LOGGER.info " - download_url: #{source} to #{destination}"
-    Down.download(source, destination: destination)
+    Down::Http.download(source, destination: destination)
+  rescue Down::Error => error
+    LOGGER.error "- download_url: Error downloading #{source} to #{destination} = #{error}"
   end
 
   def read_url(source)
     LOGGER.info "- read_url: #{source}"
-    Down.download(source).read
+    Down::Http.download(source).read
+  rescue Down::Error => error
+    LOGGER.error "- read_url: Error loading #{source} = #{error}"
   end
 end
+
+
 downloader = Downloader.new
-# while true
-downloader.process()
-#   LOGGER.info "sleeping for 10"
-#   sleep 10
-# end
+while true
+  downloader.process()
+  LOGGER.info "sleeping for 30"
+  sleep 30
+end
+#
