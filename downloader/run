@@ -4,6 +4,8 @@ require "rubygems"
 require "bundler/setup"
 require "down"
 require "aws-sdk-s3"
+require "streamio-ffmpeg"
+require "logger"
 
 Aws.config.update(
   endpoint: ENV["MINIO_ENDPOINT"],
@@ -12,102 +14,101 @@ Aws.config.update(
   force_path_style: true,
   region: 'us-east-1'
 )
+
+
+LOGGER = Logger.new(STDOUT)
+
 class Downloader
-  attr_reader :url
+  attr_reader :frame_url, :playlist_url, :base_url
 
   def minio_client
     @minio_client ||= Aws::S3::Client.new
   end
 
-  def initialize(url = "https://v.angelcam.com/iframe?v=9klzdgn2y4")
-    @url = url
-    load_ts_segments()
+  def initialize(frame_url = "https://v.angelcam.com/iframe?v=9klzdgn2y4")
+    @frame_url = frame_url
+  end
+
+  def process
+    segments = load_ts_segments()
+    LOGGER.info " - segments = #{segments}"
+    segments.each do |segment_file|
+      destination = download_video(segment_file)
+      upload_to_minio(destination)
+
+      screenshot = snapshot_video(destination, segment_file)
+      process_screenshot(screenshot)
+      upload_to_minio(screenshot)
+
+      File.delete(destination)
+      File.delete(screenshot)
+    end
   end
 
   def load_ts_segments
-    html = read_url(url)
-    playlist_url = html.match(/(https?:\/\/.*\.m3u8\?token=.*)'/).captures.first
-    base = playlist_url.gsub(playlist_url.split("/")[-1], "")
-    puts "base = #{base}"
+    html = read_url(frame_url)
+    @playlist_url = html.match(/(https?:\/\/.*\.m3u8\?token=.*)'/).captures.first
+    @base_url = playlist_url.gsub(playlist_url.split("/")[-1], "")
     item = read_url(playlist_url)
-    item.scan(/segment-\d*\.ts/).each do |tsfile|
-      download_url(base + tsfile, "../videos/#{tsfile}")
-    end
-#     values = load_url(playlist_url)
-#     segments = find_segments(values)
-#     return base, segments
+    item.scan(/segment-\d*\.ts/)
   end
 
-  def upload_to_minio(file)
+  def download_video(filename)
+    source = base_url + filename
+    LOGGER.info " - source = #{source}"
+    destination = "../videos/#{filename}"
+    LOGGER.info " - destination = #{destination}"
+    download_url(source, destination) unless File.exist?(destination)
+    destination
+  end
+
+  def snapshot_video(destination, segment_file)
+    screenshot = "../images/#{segment_file.gsub(".ts", ".jpg")}"
+    LOGGER.info " - snapshot_video: #{screenshot}"
+    movie = FFMPEG::Movie.new(destination)
+    movie.screenshot(screenshot)
+    screenshot
+  end
+
+  def upload_to_minio(destination)
+    filename = destination.split("/").last
+    content_type = "video/MP2T"
+    folder = "video"
+
+    if File.extname(destination) == ".jpg"
+      content_type = "image/jpeg"
+      folder = "images"
+    end
+
+    contents = File.read(destination)
+    key = "#{Time.now.strftime("%F")}/#{folder}/#{filename}"
+
+    LOGGER.info " - uploading #{destination} to #{key} with content_type #{content_type}"
+
     minio_client.put_object(
-      key: 'testobject',
-      body: 'Hello from MinIO!!',
-      bucket: 'meatsweats',
-      content_type: 'text/plain'
+      key: key,
+      body: contents,
+      bucket: "meatsweats",
+      content_type: content_type
     )
   end
 
+  def process_screenshot(screenshot)
+  end
+
   def download_url(source, destination)
+    LOGGER.info " - download_url: #{source} to #{destination}"
     Down.download(source, destination: destination)
   end
 
   def read_url(source)
+    LOGGER.info "- read_url: #{source}"
     Down.download(source).read
   end
 end
-Downloader.new
-# def snapshot_video(video_url):
-#     image_url = video_url.replace(
-#         videos_folder, images_folder).replace(".ts", ".jpg")
-#     rc = subprocess.call("ffmpeg -hide_banner -loglevel panic -i " +
-#                          video_url + " -vframes 1 -f image2 " + image_url, shell=True)
-#     return image_url
-
-
-# def find_segments(string):
-#     segments = re.findall('segment-\d*\.ts', string)
-#     return segments
-
-
-
-
-# def load_ts_segments(url):
-#     html = load_url(url)
-
-#     playlist_url = re.findall('(https?://.*\.m3u8\?token=.*)\'', html)[0]
-#     logging.info("found playlist_url = %s", playlist_url)
-
-#     base = "/".join(playlist_url.split("/")[:-1])
-#     logging.info("base = %s", base)
-#     values = load_url(playlist_url)
-#     segments = find_segments(values)
-#     return base, segments
-
-
-# def process(filename):
-#     Processor(filename).process()
-
-
-# videos_folder = "./videos/"
-# images_folder = "./images/"
-
-# url = "https://v.angelcam.com/iframe?v=9klzdgn2y4"
-
-# while 1:
-#     base, segments = load_ts_segments(url)
-#     for segment in segments:
-#         remote_url = (base + "/" + segment)
-#         logging.info("Loading TS Segment %s", remote_url)
-#         video_url = videos_folder + segment
-
-#         if download_url(remote_url, video_url) == 0:
-#             logging.info("Processing file")
-#             image_url = snapshot_video(video_url)
-#             process(image_url)
-#             try:
-#                 os.remove(video_url)
-#             except:
-#                 print("Error while deleting file ", video_url)
-#     logging.info("Sleeping for 30 seconds")
-#     time.sleep(30)
-# # # process("./images/segment-48659.jpg")
+downloader = Downloader.new
+# while true
+downloader.process()
+#   LOGGER.info "sleeping for 10"
+#   sleep 10
+# end

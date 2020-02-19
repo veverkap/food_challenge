@@ -22,7 +22,10 @@ GEM
     down (5.1.1)
       addressable (~> 2.5)
     jmespath (1.4.0)
+    multi_json (1.14.1)
     public_suffix (4.0.3)
+    streamio-ffmpeg (3.0.2)
+      multi_json (~> 1.8)
 
 PLATFORMS
   ruby
@@ -30,6 +33,7 @@ PLATFORMS
 DEPENDENCIES
   aws-sdk-s3!
   down (~> 5.0)!
+  streamio-ffmpeg!
 
 BUNDLED WITH
    2.1.4
