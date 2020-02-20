@@ -1,12 +1,21 @@
-require 'sinatra'
-require 'sinatra/json'
-require 'sinatra/reloader' if development?
+require "sinatra"
+require "sinatra/json"
+require "sinatra/reloader" if development?
+require "./downloader"
+require "logger"
 
-get '/' do
-  '/'
+LOGGER = Logger.new(STDOUT)
+
+get "/" do
+  "/"
 end
 
 post "/" do
+  downloader = Downloader.new
+  segment_file = downloader.load_ts_segments().last
+  destination = downloader.download_video(segment_file)
+  screenshot = downloader.snapshot_video(destination)
+  puts downloader.upload_file_to_minio(screenshot)
   json(
     {
       response_type: "in_channel",
