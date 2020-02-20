@@ -103,7 +103,17 @@ class Downloader
     LOGGER.info " - snapshot_video: #{screenshot}"
     movie = FFMPEG::Movie.new(destination)
     movie.screenshot(screenshot)
+    LOGGER.info " - completed snapshot_video"
     screenshot
+  end
+
+  def upload_to_imgur(screenshot)
+    url = "https://api.imgur.com/3/upload"
+
+    response = HTTP.auth("Client-ID #{ENV["IMGUR_CLIENT_ID"]}").post("https://api.imgur.com/3/upload", :form => {
+      :image   => HTTP::FormData::File.new(screenshot)
+    })
+    JSON.load(response.to_s)["data"]["link"]
   end
 
   def upload_file_to_minio(destination)
@@ -133,11 +143,18 @@ class Downloader
     minio_client.put_object(
       key: key,
       body: contents,
-      bucket: "meatsweats",
+      bucket: ENV["MINIO_BUCKET"],
       content_type: content_type
     )
+    LOGGER.info " - uploaded to #{key} with content_type #{content_type}"
+    key
   rescue StandardError => error
-    LOGGER.error "We had an uploading to minio error"
+    LOGGER.error "We had an uploading to minio error - #{error}"
+  end
+
+  def get_minio_external_link(key)
+    signer = Aws::S3::Presigner.new(client: minio_client)
+    signer.presigned_url(:get_object, bucket: ENV["MINIO_BUCKET"], key: key)
   end
 
   def process_screenshot(screenshot)
