@@ -27,6 +27,11 @@ LOGGER = Logger.new(STDOUT)
 class Downloader
   attr_reader :frame_url, :playlist_url, :base_url
 
+  def playlist_url
+    html = read_url(frame_url)
+    @playlist_url = html.match(/(https?:\/\/.*\.m3u8\?token=.*)'/).captures.first
+  end
+
   def root_dir
     "/tmp/bigtexan" #NO TRAILING SLASH, PATRICK
   end
@@ -103,9 +108,6 @@ class Downloader
 
   def load_ts_segments
     LOGGER.info "load_ts_segments: Loading"
-    html = read_url(frame_url)
-    @playlist_url = html.match(/(https?:\/\/.*\.m3u8\?token=.*)'/).captures.first
-    LOGGER.info "load_ts_segments: playlist_url = #{playlist_url}"
     @base_url = playlist_url.gsub(playlist_url.split("/")[-1], "")
     LOGGER.info "load_ts_segments: base_ur = #{base_url}"
     item = read_url(playlist_url)
