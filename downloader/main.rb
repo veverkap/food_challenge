@@ -14,7 +14,7 @@ def load_screenshot(downloader)
   output = "/tmp/bigtexan/images/output#{Time.now.to_i}.jpg"
   LOGGER.info "load_screenshot: snapshotting to #{output}"
   downloader.measure do
-    stdout_str, error_str, status = Open3.capture3("/usr/local/bin/ffmpeg", "-i", playlist_url, "-vframes", "1", "-f", "image2", output)
+    stdout_str, error_str, status = Open3.capture3("/usr/bin/ffmpeg", "-i", playlist_url, "-vframes", "1", "-f", "image2", output)
     raise error_str unless status.success?
   end
   output
