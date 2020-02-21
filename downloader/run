@@ -1,0 +1,13 @@
+#!/usr/bin/env ruby
+#coding:utf-8
+require "rubygems"
+require "bundler/setup"
+require "./downloader"
+
+downloader = Downloader.new
+
+while true
+  downloader.process()
+  LOGGER.info "sleeping for 30"
+  sleep 30
+end
