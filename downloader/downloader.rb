@@ -45,7 +45,8 @@ class Downloader
   end
 
   def initialize(frame_url = "https://v.angelcam.com/iframe?v=9klzdgn2y4")
-    FileUtils.mkdir_p("#{root_dir}/images")
+    LOGGER.info "starting"
+    puts FileUtils.mkdir_p("#{root_dir}/images")
     FileUtils.mkdir_p("#{root_dir}/videos")
     @frame_url = frame_url
   end
@@ -130,18 +131,6 @@ class Downloader
     movie.screenshot(screenshot)
     LOGGER.info "snapshot_video: completed"
     screenshot
-  end
-
-  def upload_to_imgur(screenshot)
-    LOGGER.info "upload_to_imgur: uploading #{screenshot}"
-    url = "https://api.imgur.com/3/upload"
-
-    response = HTTP.auth("Client-ID #{ENV["IMGUR_CLIENT_ID"]}").post("https://api.imgur.com/3/upload", :form => {
-      :image   => HTTP::FormData::File.new(screenshot)
-    })
-    link = JSON.load(response.to_s)["data"]["link"]
-    LOGGER.info "upload_to_imgur: uploaded to #{link}"
-    link
   end
 
   def upload_file_to_minio(destination)

@@ -6,8 +6,8 @@ require "./downloader"
 
 downloader = Downloader.new
 
-while true
-  downloader.process()
-  LOGGER.info "sleeping for 30"
-  sleep 30
-end
+# while true
+#   downloader.process()
+#   LOGGER.info "sleeping for 30"
+#   sleep 30
+# end
