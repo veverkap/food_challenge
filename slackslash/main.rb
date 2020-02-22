@@ -24,61 +24,33 @@ class MainApp < Sinatra::Base
   get "/snapshot" do
     screenshot = Screenshotter.snapshot(downloader.playlist_url)
     File.read(screenshot)
+    File.delete(screenshot)
     send_file screenshot, :type => :jpg
-
   end
 
-  # post "/" do
-  #   push = URI.decode_www_form(request.body.read).to_h
-  #   LOGGER.info "main: POST #{push}"
+  post "/" do
+    form = URI.decode_www_form(request.body.read).to_h
+    log "POST form: #{form}"
 
-  #   fork do
-  #     send_snapshot(push["response_url"], push["user_id"])
-  #   end
+    fork do
+      Slacker.send_snapshot(form["response_url"], form["user_id"], downloader)
+    end
 
-  #   json(
-  #     {
-  #       response_type: "in_channel",
-  #       text: ""
-  #     }
-  #   )
-  # end
-
-  def load_screenshot(downloader)
-    playlist_url = downloader.playlist_url
-    LOGGER.info "load_screenshot: playlist_url = #{playlist_url}"
+    json(
+      {
+        response_type: "in_channel",
+        text: ""
+      }
+    )
   end
 
-  def send_snapshot(response_url, user_id)
-    LOGGER.info "send_snapshot: response_url = #{response_url}"
-    LOGGER.info "send_snapshot: user_id      = #{user_id}"
-
-    # link = downloader.upload_to_imgur(screenshot)
-    # LOGGER.info "send_snapshot: deleting #{screenshot}"
-    # File.delete(screenshot)
-
-    # sarcasm = [
-    #   "Here is my latest selfie! <@#{user_id}>",
-    #   "Ok, <@#{user_id}>, here is your freakin' picture.",
-    #   "I see sweaty people",
-    #   "Stalk much, <@#{user_id}>?"
-    # ]
-
-    # slack_response = {
-    #   replace_original: true,
-    #   response_type: "in_channel",
-    #   text: sarcasm.sample,
-    #   attachments: [
-    #     {
-    #       text: "",
-    #       image_url: link
-    #     }
-    #   ]
-    # }
-
-    # HTTP.post(response_url, json: slack_response)
-  rescue StandardError => error
-    HTTP.post(response_url, json: { response_type: "in_channel", text: "Crap, something went wrong (#{error})"})
+  def log(msg)
+    caller_method = caller_locations.first.label
+    LOGGER.info "#{self.class.to_s} (#{caller_method}): #{msg}"
   end
 
+  def logerr(msg)
+    caller_method = caller_locations.first.label
+    LOGGER.error "#{self.class.to_s} (#{caller_method}): #{msg}"
+  end
 end

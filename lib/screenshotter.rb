@@ -9,19 +9,11 @@ class Screenshotter < LoggingBase
       log "playlist_url = #{playlist_url}"
       output_file = "/tmp/bigtexan/images/output#{Time.now.to_i}.jpg"
       log "output_file = #{output_file}"
-      measure do
+      Measurer.measure do
         stdout_str, error_str, status = Open3.capture3(which("ffmpeg"), "-i", playlist_url, "-vframes", "1", "-f", "image2", output_file)
         raise error_str unless status.success?
       end
       output_file
-    end
-
-    def measure(&block)
-      start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      result = block.call
-      finish = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      log "Completed in #{finish - start} seconds"
-      result
     end
 
     def which(cmd)
