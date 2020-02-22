@@ -1,6 +1,7 @@
 require "sinatra/base"
 require "sinatra/json"
 require "logger"
+require "../lib/logging_base"
 Dir.glob(File.join("..", "lib", "**", "*.rb"), &method(:require))
 # require "uri"
 # require "pp"
@@ -23,8 +24,6 @@ class MainApp < Sinatra::Base
 
   get "/snapshot" do
     screenshot = Screenshotter.snapshot(downloader.playlist_url)
-    File.read(screenshot)
-    File.delete(screenshot)
     send_file screenshot, :type => :jpg
   end
 
