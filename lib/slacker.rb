@@ -38,7 +38,7 @@ class Slacker < LoggingBase
       link = Uploader.upload_to_imgur(screenshot)
       log "link = #{link}"
       log "deleting #{screenshot}"
-      File.delete(screenshot)
+
 
       sarcasm = [
         "Here is my latest selfie! <@#{user_id}>",
@@ -62,6 +62,7 @@ class Slacker < LoggingBase
       log "slack_response = #{slack_response}"
       http_response = HTTP.post(response_url, json: slack_response)
       log "http_response = #{http_response}"
+      screenshot
     rescue StandardError => error
       logerr "Error posting to Slack: #{error}"
       HTTP.post(response_url, json: { response_type: "in_channel", text: "Crap, something went wrong (#{error})"})

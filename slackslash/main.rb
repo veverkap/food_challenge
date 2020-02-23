@@ -28,7 +28,9 @@ class MainApp < Sinatra::Base
     log "POST form: #{form}"
 
     fork do
-      Slacker.send_snapshot(form["response_url"], form["user_id"], downloader.playlist_url)
+      screenshot = Slacker.send_snapshot(form["response_url"], form["user_id"], downloader.playlist_url)
+      Tweeter.send_tweet(screenshot)
+      File.delete(screenshot)
     end
 
     json(
@@ -44,6 +46,11 @@ class MainApp < Sinatra::Base
     return json["challenge"] if json["type"] == "url_verification"
     fork do
       Slacker.process_slack_conversation(json) if json["type"] == "event_callback"
+    end
+
+    fork do
+      screenshot = Screenshotter.snapshot(downloader.playlist_url)
+      Tweeter.send_tweet(screenshot)
     end
     "OK"
   end
