@@ -2,7 +2,7 @@ So, you want to see MeatSweats?
 
 ![gif](https://media.giphy.com/media/3oxHQG9Ks6OtIIMX8A/giphy.gif)
 
-There are three main components to this "app"
+There are three main components to this "app".  Each application has a README of its own that discusses setup and running the apps (or it will soon)
 
 ## Downloader (WIP)
 
