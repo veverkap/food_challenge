@@ -11,7 +11,7 @@ LOGGER = Logger.new(STDOUT) unless defined? LOGGER
 
 class MainApp < Sinatra::Base
   def downloader
-    @downloader = Downloader.new
+    @downloader ||= Downloader.new
   end
 
   get "/" do
@@ -44,14 +44,11 @@ class MainApp < Sinatra::Base
   post "/rt_events" do
     json = JSON.load(request.body.read)
     return json["challenge"] if json["type"] == "url_verification"
+
     fork do
       Slacker.process_slack_conversation(json) if json["type"] == "event_callback"
     end
 
-    fork do
-      screenshot = Screenshotter.snapshot(downloader.playlist_url)
-      Tweeter.send_tweet(screenshot)
-    end
     "OK"
   end
 

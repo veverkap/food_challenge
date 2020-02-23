@@ -1,5 +1,6 @@
 require "http"
 require "pp"
+
 class Slacker < LoggingBase
   class << self
     def process_slack_conversation(json)
@@ -16,16 +17,17 @@ class Slacker < LoggingBase
         link = Uploader.upload_to_imgur(screenshot)
         log "link = #{link}"
         log "deleting #{screenshot}"
-        File.delete(screenshot)
 
-        puts slack_client.chat_postMessage(channel: channel, text: "Here's what I got", thread_ts: thread_ts, attachments: [
+        slack_client.chat_postMessage(channel: channel, text: "Here's what I got", thread_ts: thread_ts, attachments: [
           {
             text: "",
             image_url: link
           }
         ])
+
+        Tweeter.send_tweet(screenshot)
+        File.delete(screenshot)
       end
-      # snd_image
     rescue StandardError => error
       pp error
     end
