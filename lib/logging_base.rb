@@ -27,11 +27,17 @@ module LoggingBase
     LoggingBase.slack_client
   end
 
+  # Logs with INFO
+  #
+  # @param msg [String] message
   def log(msg)
     caller_method = caller_locations.first.label
     LOGGER.info "#{LoggingBase.colored_class(self.class.to_s)} (#{caller_method}): #{msg}"
   end
 
+  # Logs with ERROR
+  #
+  # @param msg [String] message
   def logerr(msg)
     caller_method = caller_locations.first.label
     LOGGER.error "#{LoggingBase.colored_class(self.class.to_s)} (#{caller_method}): #{msg}"
@@ -42,16 +48,25 @@ module LoggingBase
       @client ||= Slack::Web::Client.new
     end
 
+  # Logs with INFO
+  #
+  # @param msg [String] message
     def log(msg)
       caller_method = caller_locations.first.label
       LOGGER.info "#{colored_class(self.to_s)} (#{caller_method}): #{msg}"
     end
 
+  # Logs with ERROR
+  #
+  # @param msg [String] message
     def logerr(msg)
       caller_method = caller_locations.first.label
       LOGGER.error "#{colored_class(self.to_s)} (#{caller_method}): #{msg}"
     end
 
+    # Changes the color of the string based on the class
+    #
+    # @param item [String] class name
     def colored_class(item)
       case item
       when "Processor"
