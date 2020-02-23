@@ -1,21 +1,17 @@
+require "rubygems"
+require "bundler/setup"
 require "sinatra/base"
 require "sinatra/json"
 require "logger"
+require "json"
 require "../lib/logging_base"
 Dir.glob(File.join("..", "lib", "**", "*.rb"), &method(:require))
-# require "uri"
-# require "pp"
-# require "http"
 
 LOGGER = Logger.new(STDOUT) unless defined? LOGGER
 
 class MainApp < Sinatra::Base
   def downloader
     @downloader = Downloader.new
-  end
-
-  def uploader
-    @uploader = Uploader.new
   end
 
   get "/" do
@@ -32,7 +28,7 @@ class MainApp < Sinatra::Base
     log "POST form: #{form}"
 
     fork do
-      Slacker.send_snapshot(form["response_url"], form["user_id"], downloader)
+      Slacker.send_snapshot(form["response_url"], form["user_id"], downloader.playlist_url)
     end
 
     json(
@@ -41,6 +37,15 @@ class MainApp < Sinatra::Base
         text: ""
       }
     )
+  end
+
+  post "/rt_events" do
+    json = JSON.load(request.body.read)
+    return json["challenge"] if json["type"] == "url_verification"
+    fork do
+      Slacker.process_slack_conversation(json) if json["type"] == "event_callback"
+    end
+    "OK"
   end
 
   def log(msg)

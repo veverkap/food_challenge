@@ -2,12 +2,34 @@
 #coding:utf-8
 require "rubygems"
 require "bundler/setup"
-require "./downloader"
+require "logger"
+require "timers"
+require "../lib/logging_base"
+Dir.glob(File.join("..", "lib", "**", "*.rb"), &method(:require))
 
-downloader = Downloader.new
+LOGGER = Logger.new(STDOUT) unless defined? LOGGER
 
-# while true
-#   downloader.process()
-#   LOGGER.info "sleeping for 30"
-#   sleep 30
-# end
+# # timers = Timers::Group.new
+
+# # every_five_seconds = timers.every(5) { puts "Another 5 seconds" }
+
+# # every_ten_seconds = timers.every(10) { puts "10 seconds" }
+
+# # loop { timers.wait }
+# # while true
+
+# #   # # download ts files for archiving
+
+
+# #         # segments = downloader.load_ts_segments()
+# #         # log "segments = #{segments}"
+# #         # destinations = segments.map do |segment_file|
+# #         #   destination = downloader.download_video(segment_file)
+# #         #   Uploader.upload_file_to_minio(destination)
+# #         #   destination
+# #         # end
+# #   #processor
+# #   Processor.process()
+# #   log "sleeping for 30"
+# #   sleep 30
+# # end

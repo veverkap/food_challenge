@@ -8,6 +8,15 @@ GEM
       tzinfo (~> 1.1)
     addressable (2.7.0)
       public_suffix (>= 2.0.2, < 5.0)
+    async (1.24.2)
+      console (~> 1.0)
+      nio4r (~> 2.3)
+      timers (~> 4.1)
+    async-io (1.27.3)
+      async (~> 1.14)
+    async-websocket (0.8.0)
+      async-io
+      websocket-driver (~> 0.7.0)
     aws-eventstream (1.0.3)
     aws-partitions (1.274.0)
     aws-sdk-core (3.90.1)
@@ -24,8 +33,8 @@ GEM
       aws-sigv4 (~> 1.1)
     aws-sigv4 (1.1.0)
       aws-eventstream (~> 1.0, >= 1.0.2)
-    backports (3.16.1)
     concurrent-ruby (1.1.6)
+    console (1.8.1)
     domain_name (0.5.20190701)
       unf (>= 0.0.5, < 1.0.0)
     down (5.1.1)
@@ -53,40 +62,12 @@ GEM
     i18n (1.8.2)
       concurrent-ruby (~> 1.0)
     jmespath (1.4.0)
-    listen (3.2.1)
-      rb-fsevent (~> 0.10, >= 0.10.3)
-      rb-inotify (~> 0.9, >= 0.9.10)
     minitest (5.14.0)
-    multi_json (1.14.1)
     multipart-post (2.1.1)
-    mustermann (1.1.1)
-      ruby2_keywords (~> 0.0.1)
     nio4r (2.5.2)
     public_suffix (4.0.3)
-    puma (4.3.1)
-      nio4r (~> 2.0)
-    rack (2.2.2)
-    rack-protection (2.0.8.1)
-      rack
+    rainbow (3.0.0)
     rake (13.0.1)
-    rb-fsevent (0.10.3)
-    rb-inotify (0.10.1)
-      ffi (~> 1.0)
-    rerun (0.13.0)
-      listen (~> 3.0)
-    ruby2_keywords (0.0.2)
-    sinatra (2.0.8.1)
-      mustermann (~> 1.0)
-      rack (~> 2.0)
-      rack-protection (= 2.0.8.1)
-      tilt (~> 2.0)
-    sinatra-contrib (2.0.8.1)
-      backports (>= 2.8.2)
-      multi_json
-      mustermann (~> 1.0)
-      rack-protection (= 2.0.8.1)
-      sinatra (= 2.0.8.1)
-      tilt (~> 2.0)
     slack-ruby-client (0.14.5)
       activesupport
       faraday (>= 0.9)
@@ -94,10 +75,8 @@ GEM
       gli
       hashie
       websocket-driver
-    streamio-ffmpeg (3.0.2)
-      multi_json (~> 1.8)
     thread_safe (0.3.6)
-    tilt (2.0.10)
+    timers (4.3.0)
     tzinfo (1.2.6)
       thread_safe (~> 0.1)
     unf (0.1.4)
@@ -111,15 +90,13 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  async-websocket (~> 0.8.0)!
   aws-sdk-s3!
   down (~> 5.0)!
   http (~> 4.0)!
-  puma!
-  rerun!
-  sinatra!
-  sinatra-contrib!
+  rainbow!
   slack-ruby-client!
-  streamio-ffmpeg!
+  timers!
 
 BUNDLED WITH
    2.1.4

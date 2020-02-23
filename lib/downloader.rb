@@ -4,7 +4,6 @@ require "benchmark"
 require "fileutils"
 require "down/http"
 require "aws-sdk-s3"
-require "streamio-ffmpeg"
 require "logger"
 require "json"
 require "pp"
@@ -26,6 +25,23 @@ class Downloader < LoggingBase
     html.match(/(https?:\/\/.*\.m3u8\?token=.*)'/).captures.first
   end
 
+  def load_ts_segments
+    current_playlist_url = playlist_url
+    @base_url = current_playlist_url.gsub(current_playlist_url.split("/")[-1], "")
+    log "base_url = #{base_url}"
+    item = read_url(current_playlist_url)
+    item.scan(/segment-\d*\.ts/)
+  end
+
+  def download_video(filename)
+    source = base_url + filename
+    log "source = #{source}"
+    destination = "#{root_dir}/videos/#{filename}"
+    log "destination = #{destination}"
+    download_url(source, destination) unless File.exist?(destination)
+    destination
+  end
+
   private
 
   def root_dir
@@ -39,22 +55,14 @@ class Downloader < LoggingBase
     logerr "Error loading #{source} = #{error}"
   end
 
-  def log(msg)
-    caller_method = caller_locations.first.label
-    LOGGER.info "#{self.class.to_s} (#{caller_method}): #{msg}"
+  def download_url(source, destination)
+    log "#{source} to #{destination}"
+    Down::Http.download(source, destination: destination)
+  rescue Down::Error => error
+    logerr "Error downloading #{source} to #{destination} = #{error}"
   end
 
-  def logerr(msg)
-    caller_method = caller_locations.first.label
-    LOGGER.error "#{self.class.to_s} (#{caller_method}): #{msg}"
-  end
-  # def minio_client
-  #   @minio_client ||= Aws::S3::Client.new
-  # end
 
-  # def slack_client
-  #   @client ||= Slack::Web::Client.new
-  # end
 
 
   # def measure(&block)
@@ -113,22 +121,9 @@ class Downloader < LoggingBase
   #   LOGGER.error "process: Whoops, something bad happened #{error}"
   # end
 
-  # def load_ts_segments
-  #   LOGGER.info "load_ts_segments: Loading"
-  #   @base_url = playlist_url.gsub(playlist_url.split("/")[-1], "")
-  #   LOGGER.info "load_ts_segments: base_ur = #{base_url}"
-  #   item = read_url(playlist_url)
-  #   item.scan(/segment-\d*\.ts/)
-  # end
 
-  # def download_video(filename)
-  #   source = base_url + filename
-  #   LOGGER.info "download_video: source = #{source}"
-  #   destination = "#{root_dir}/videos/#{filename}"
-  #   LOGGER.info "download_video: destination = #{destination}"
-  #   download_url(source, destination) unless File.exist?(destination)
-  #   destination
-  # end
+
+
 
   # def snapshot_video(destination)
   #   screenshot = "#{root_dir}/images/#{destination.split("/").last.gsub(".ts", ".jpg")}"
@@ -139,21 +134,7 @@ class Downloader < LoggingBase
   #   screenshot
   # end
 
-  # def upload_file_to_minio(destination)
-  #   filename = destination.split("/").last
-  #   content_type = "video/MP2T"
-  #   folder = "video"
 
-  #   if File.extname(destination) == ".jpg"
-  #     content_type = "image/jpeg"
-  #     folder = "images"
-  #   end
-
-  #   contents = File.read(destination)
-  #   key = "#{Time.now.strftime("%F")}/#{folder}/#{filename}"
-
-  #   upload_to_minio(key, contents, content_type)
-  # end
 
   # def upload_json_to_minio(destination, json)
   #   filename = destination.split("/").last.gsub(".ts", ".json")
@@ -161,19 +142,7 @@ class Downloader < LoggingBase
   #   upload_to_minio(key, JSON.dump(json), "application/json")
   # end
 
-  # def upload_to_minio(key, contents, content_type)
-  #   LOGGER.info "upload_to_minio: uploading to #{key} with content_type #{content_type}"
-  #   minio_client.put_object(
-  #     key: key,
-  #     body: contents,
-  #     bucket: ENV["MINIO_BUCKET"],
-  #     content_type: content_type
-  #   )
-  #   LOGGER.info "upload_to_minio: uploaded to #{key} with content_type #{content_type}"
-  #   key
-  # rescue StandardError => error
-  #   LOGGER.error "upload_to_minio: We had an uploading to minio error - #{error}"
-  # end
+
 
   # def get_minio_external_link(key)
   #   signer = Aws::S3::Presigner.new(client: minio_client)
@@ -190,12 +159,7 @@ class Downloader < LoggingBase
   #   result
   # end
 
-  # def download_url(source, destination)
-  #   LOGGER.info "download_url: #{source} to #{destination}"
-  #   Down::Http.download(source, destination: destination)
-  # rescue Down::Error => error
-  #   LOGGER.error "download_url: Error downloading #{source} to #{destination} = #{error}"
-  # end
+
 
 
 end
