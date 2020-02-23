@@ -3,8 +3,9 @@ require "logger"
 
 LOGGER = Logger.new(STDOUT) unless defined? LOGGER
 
-class Screenshotter < LoggingBase
+class Screenshotter
   class << self
+    include LoggingBase
     def snapshot(playlist_url)
       log "playlist_url = #{playlist_url}"
       output_file = "/tmp/bigtexan/images/output#{Time.now.to_i}.jpg"

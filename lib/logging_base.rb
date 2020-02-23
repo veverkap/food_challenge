@@ -22,7 +22,7 @@ Slack.configure do |config|
   raise "Missing ENV[SLACK_API_TOKEN]!" unless config.token
 end
 
-class LoggingBase
+module LoggingBase
   def slack_client
     LoggingBase.slack_client
   end

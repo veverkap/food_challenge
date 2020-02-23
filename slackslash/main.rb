@@ -10,25 +10,26 @@ Dir.glob(File.join("..", "lib", "**", "*.rb"), &method(:require))
 LOGGER = Logger.new(STDOUT) unless defined? LOGGER
 
 class MainApp < Sinatra::Base
-  def downloader
-    @downloader ||= Downloader.new
-  end
-
+  include LoggingBase
+  # This is a poor man's healthcheck
   get "/" do
     json("ok")
   end
 
+  # This endpoint snapshots the feed live and then serves the image
   get "/snapshot" do
-    screenshot = Screenshotter.snapshot(downloader.playlist_url)
+    screenshot = Screenshotter.snapshot(Downloader.playlist_url)
     send_file screenshot, :type => :jpg
   end
 
+  # This endpoint handles the [Slack slash command](https://api.slack.com/legacy/custom-integrations/slash-commands)
   post "/" do
+    # Slack sends this body encoded (param1=one&param2=two) so we use decode_www_form to decode it
     form = URI.decode_www_form(request.body.read).to_h
     log "POST form: #{form}"
 
     fork do
-      screenshot = Slacker.send_snapshot(form["response_url"], form["user_id"], downloader.playlist_url)
+      screenshot = Slacker.send_snapshot(form["response_url"], form["user_id"], Downloader.playlist_url)
       Tweeter.send_tweet(screenshot)
       File.delete(screenshot)
     end
@@ -41,6 +42,7 @@ class MainApp < Sinatra::Base
     )
   end
 
+  # This endpoint handles incoming [Slack events](https://api.slack.com/events-api)
   post "/rt_events" do
     json = JSON.load(request.body.read)
     return json["challenge"] if json["type"] == "url_verification"
@@ -50,15 +52,5 @@ class MainApp < Sinatra::Base
     end
 
     "OK"
-  end
-
-  def log(msg)
-    caller_method = caller_locations.first.label
-    LOGGER.info "#{self.class.to_s} (#{caller_method}): #{msg}"
-  end
-
-  def logerr(msg)
-    caller_method = caller_locations.first.label
-    LOGGER.error "#{self.class.to_s} (#{caller_method}): #{msg}"
   end
 end

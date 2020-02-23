@@ -2,8 +2,9 @@ require "rubygems"
 require "bundler/setup"
 require "twitter"
 
-class Tweeter < LoggingBase
+class Tweeter
   class << self
+    include LoggingBase
     def send_tweet(screenshot)
       log "sending screenshot"
       sarcasm = [

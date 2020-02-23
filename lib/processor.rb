@@ -1,6 +1,7 @@
 require "pp"
-class Processor < LoggingBase
+class Processor
   class << self
+    include LoggingBase
     def process
       Rainbow.enabled = true
         # get snapshot

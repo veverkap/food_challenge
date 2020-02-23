@@ -1,8 +1,9 @@
 require "http"
 require "pp"
 
-class Slacker < LoggingBase
+class Slacker
   class << self
+    include LoggingBase
     def process_slack_conversation(json)
       event = json["event"]
       return if event.fetch("subtype", nil) == "bot_message"

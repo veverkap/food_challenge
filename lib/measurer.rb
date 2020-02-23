@@ -1,5 +1,6 @@
-class Measurer < LoggingBase
+class Measurer
   class << self
+    include LoggingBase
     def measure(&block)
       start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       result = block.call
