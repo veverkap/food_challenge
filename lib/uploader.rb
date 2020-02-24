@@ -61,7 +61,6 @@ class Uploader
       result
     end
 
-
     private
       def upload_to_minio(key, contents, content_type)
         log "uploading to #{key} with content_type #{content_type}"

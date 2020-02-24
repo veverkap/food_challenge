@@ -4,7 +4,8 @@ require "twitter"
 
 class Tweeter
   class << self
-    include LoggingBase
+    include
+
     def send_tweet(screenshot)
       log "sending screenshot"
       sarcasm = [

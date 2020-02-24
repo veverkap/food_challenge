@@ -4,6 +4,12 @@ require "pp"
 class Slacker
   class << self
     include LoggingBase
+
+    KEYWORD = "sweatmeats".freeze
+
+    # Parses Slack conversation and acts upon it.
+    #
+    # @param json [Hash] conversation in Hash format [API Details](https://api.slack.com/events-api)
     def process_slack_conversation(json)
       event = json["event"]
       return if event.fetch("subtype", nil) == "bot_message"
@@ -12,7 +18,7 @@ class Slacker
       channel = event.fetch("channel", "#talk-big-texan-debug")
       thread_ts = event.fetch("ts", "")
 
-      if text.downcase == "sweatmeats"
+      if text.downcase =~ "sweatmeats"
         downloader = Downloader.new
         screenshot = Screenshotter.snapshot(downloader.playlist_url)
         link = Uploader.upload_to_imgur(screenshot)
@@ -33,6 +39,11 @@ class Slacker
       pp error
     end
 
+    # Send snapshot from playlist to response_url with a funny comment to user_id
+    #
+    # @param response_url [String] Slack provided URL to POST to
+    # @param user_id [String] User that called the Slack slash command
+    # @param playlist_url [String] url of the m3u8 file
     def send_snapshot(response_url, user_id, playlist_url)
       log "response_url = #{response_url}"
       log "user_id      = #{user_id}"

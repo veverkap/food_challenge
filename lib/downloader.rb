@@ -11,8 +11,8 @@ require "slack-ruby-client"
 
 class Downloader
   class << self
-    FRAME_URL = "https://v.angelcam.com/iframe?v=9klzdgn2y4"
-    ROOT_DIR  = "/tmp/bigtexan" #NO TRAILING SLASH, PATRICK
+    FRAME_URL = "https://v.angelcam.com/iframe?v=9klzdgn2y4".freeze
+    ROOT_DIR  = "/tmp/bigtexan".freeze #NO TRAILING SLASH, PATRICK
 
     include LoggingBase
 

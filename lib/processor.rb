@@ -2,6 +2,8 @@ require "pp"
 class Processor
   class << self
     include LoggingBase
+
+    # Processor main thing
     def process
       Rainbow.enabled = true
         # get snapshot
@@ -10,10 +12,5 @@ class Processor
 
         # procees results
     end
-
-    def downloader
-      @downloader ||= Downloader.new
-    end
-
   end
 end

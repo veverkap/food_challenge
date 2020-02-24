@@ -6,6 +6,11 @@ LOGGER = Logger.new(STDOUT) unless defined? LOGGER
 class Screenshotter
   class << self
     include LoggingBase
+
+    # Uses ffmpeg via Open3 to snapshot the playlist url
+    #
+    # @param playlist_url [String] URL to m3u8 playlist
+    # @return [String] URI to image output of the ffmpeg call
     def snapshot(playlist_url)
       log "playlist_url = #{playlist_url}"
       output_file = "/tmp/bigtexan/images/output#{Time.now.to_i}.jpg"
@@ -17,6 +22,10 @@ class Screenshotter
       output_file
     end
 
+    # Uses the path ENV variable to find a particular executable on the system
+    #
+    # @param cmd [String] the executable to find
+    # @return [String] URI to executable
     def which(cmd)
       exts = ENV['PATHEXT'] ? ENV['PATHEXT'].split(';') : ['']
       ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
