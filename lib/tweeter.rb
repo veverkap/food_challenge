@@ -4,8 +4,11 @@ require "twitter"
 
 class Tweeter
   class << self
-    include
+    include LoggingBase
 
+    # Send snapshot to Twitter account
+    #
+    # @param screenshot [String] URI to screenshot
     def send_tweet(screenshot)
       log "sending screenshot"
       sarcasm = [
@@ -17,13 +20,15 @@ class Tweeter
       log "completed with #{tweet}"
     end
 
-    def twitter_client
-      @client ||= Twitter::REST::Client.new do |config|
-        config.consumer_key        = ENV["TWITTER_CONSUMER_KEY"]
-        config.consumer_secret     = ENV["TWITTER_CONSUMER_SECRET"]
-        config.access_token        = ENV["TWITTER_ACCESS_TOKEN_KEY"]
-        config.access_token_secret = ENV["TWITTER_ACCESS_TOKEN_SECRET"]
+    private
+
+      def twitter_client
+        @twitter_client ||= Twitter::REST::Client.new do |config|
+          config.consumer_key        = ENV["TWITTER_CONSUMER_KEY"]
+          config.consumer_secret     = ENV["TWITTER_CONSUMER_SECRET"]
+          config.access_token        = ENV["TWITTER_ACCESS_TOKEN_KEY"]
+          config.access_token_secret = ENV["TWITTER_ACCESS_TOKEN_SECRET"]
+        end
       end
-    end
   end
 end
