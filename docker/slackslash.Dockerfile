@@ -4,12 +4,13 @@ RUN apt-get update -qq && apt-get install ffmpeg -y
 
 WORKDIR /usr/src/app
 
-COPY Gemfile Gemfile.lock ./
+COPY slackslash/ ./
+
+COPY lib/ /usr/src/lib
 
 RUN gem install bundler
 
 RUN bundle install
 
-COPY main.rb config.ru downloader.rb ./
 
 CMD ["puma"]
