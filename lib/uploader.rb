@@ -7,6 +7,10 @@ require "aws-sdk-s3"
 class Uploader
   class << self
     include LoggingBase
+    # Uploads the screenshot to imgur
+    #
+    # @param screenshot [String] URI to screenshot
+    # @return [String] URL to imgur link
     def upload_to_imgur(screenshot)
       log "uploading #{screenshot}"
 
@@ -23,11 +27,7 @@ class Uploader
       end
     end
 
-    def upload_json_to_minio(destination, json)
-      filename = destination.split("/").last.gsub(".ts", ".json")
-      key = "#{Time.now.strftime("%F")}/json/#{filename}"
-      upload_to_minio(key, JSON.dump(json), "application/json")
-    end
+
 
     def upload_file_to_minio(destination)
       filename = destination.split("/").last
@@ -74,6 +74,12 @@ class Uploader
         key
       rescue StandardError => error
         logerr "We had an error - #{error}"
+      end
+
+      def upload_json_to_minio(destination, json)
+        filename = destination.split("/").last.gsub(".ts", ".json")
+        key = "#{Time.now.strftime("%F")}/json/#{filename}"
+        upload_to_minio(key, JSON.dump(json), "application/json")
       end
 
       def minio_client
