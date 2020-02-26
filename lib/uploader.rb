@@ -48,11 +48,15 @@ class Uploader
       upload_to_minio(key, contents, content_type)
     end
 
+    # Gets a signed url from Minio cause we might need that
+    #
+    # @param key [String] the key for the object
     def get_minio_external_link(key)
       signer = Aws::S3::Presigner.new(client: minio_client)
       signer.presigned_url(:get_object, bucket: ENV["MINIO_BUCKET"], key: key)
     end
 
+    #
     def process_screenshot(screenshot)
       LOGGER.info "process_screenshot: uploading #{screenshot}"
       response = HTTP.post("http://127.0.0.1:8000/detect", :form => {
@@ -76,6 +80,7 @@ class Uploader
         key
       rescue StandardError => error
         logerr "We had an error - #{error}"
+        false
       end
 
       def upload_json_to_minio(destination, json)

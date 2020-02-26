@@ -14,12 +14,12 @@ timers = Timers::Group.new
 #setup downloader to run every 5 seconds
 every_five_seconds = timers.now_and_every(5) do
   #download TS files
-  puts "Another 5 seconds"
+  Downloader.download_ts_files()
 end
 
 # setup Processor.process to run every 10 minutes
 every_ten_minutes = timers.now_and_every(600) do
-
+  Processor.process()
 end
 
 loop { timers.wait }

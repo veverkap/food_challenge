@@ -17,7 +17,8 @@ class Tweeter
         "MEATSWEATS"
       ]
       tweet = twitter_client.update_with_media(sarcasm.sample, screenshot)
-      log "completed with #{tweet}"
+      log "completed with #{tweet.url}"
+      tweet
     end
 
     private
