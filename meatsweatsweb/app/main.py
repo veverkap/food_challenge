@@ -16,5 +16,4 @@ def read_root():
 
 @app.post("/detect")
 def detect(image: UploadFile = File(...)):
-    print("DETECTED")
     return DetectingResource().detect(image)
