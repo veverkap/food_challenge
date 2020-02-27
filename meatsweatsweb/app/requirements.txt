@@ -2,7 +2,6 @@ cvlib
 fastapi
 numpy
 opencv-python
-opencv-contrib-python
 python-multipart
 tensorflow
 uvicorn
