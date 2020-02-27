@@ -1,5 +1,7 @@
 FROM python:3.7
 
+RUN apt install libjasper1
+
 EXPOSE 80
 
 COPY ./app /app
