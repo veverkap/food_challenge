@@ -19,7 +19,7 @@ RUN apt-get update \
   libpq-dev \
   && rm -rf /var/lib/apt/lists/*
 
-RUN pip install numpy
+RUN pip install numpy --extra-index-url=https://www.piwheels.org/simple
 
 WORKDIR /
 ENV OPENCV_VERSION="4.1.1"
