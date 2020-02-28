@@ -17,6 +17,8 @@ RUN apt-get update \
   libtiff-dev \
   libavformat-dev \
   libpq-dev \
+  python-dev \
+  libatlas-base-dev \
   && rm -rf /var/lib/apt/lists/*
 
 RUN pip install numpy --extra-index-url=https://www.piwheels.org/simple
