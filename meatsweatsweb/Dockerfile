@@ -1,7 +1,5 @@
 FROM debian:buster
 
-ENV PYTHONPATH /usr/lib/python3/dist-packages
-
 RUN apt-get update && apt-get install -y apt-utils \
   python3-pip \
   python3-opencv
