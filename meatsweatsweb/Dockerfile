@@ -1,4 +1,4 @@
-FROM jjanzic/docker-python3-opencv
+FROM sgtwilko/rpi-raspbian-opencv:latest
 
 EXPOSE 80
 
