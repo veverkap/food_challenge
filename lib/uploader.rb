@@ -27,7 +27,7 @@ class Uploader
       end
     end
 
-    # Uploads the screenshot to imgur
+    # Uploads the screenshot to minio
     #
     # @param screenshot [String] URI to screenshot
     # @return [String] URL to imgur link
