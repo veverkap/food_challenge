@@ -30,7 +30,7 @@ class Uploader
     # Uploads the screenshot to minio
     #
     # @param screenshot [String] URI to screenshot
-    # @return [String] URL to imgur link
+    # @return [String] URL to minio link
     def upload_file_to_minio(destination)
       filename = destination.split("/").last
       content_type = "video/MP2T"
