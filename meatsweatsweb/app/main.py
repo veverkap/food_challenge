@@ -9,6 +9,10 @@ app = FastAPI()
 logger = logging.getLogger("fastapi")
 logger.setLevel(logging.DEBUG)
 print("OpenCV Version: {}".format(cv2.__version__))
+dest_dir = os.path.expanduser('~') + os.path.sep + '.cvlib' + os.path.sep + \
+    'object_detection' + os.path.sep + 'yolo' + os.path.sep + 'yolov3'
+
+print(dest_dir)
 
 
 @app.get("/")
