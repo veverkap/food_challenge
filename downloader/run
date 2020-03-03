@@ -9,27 +9,17 @@ Dir.glob(File.join("..", "lib", "**", "*.rb"), &method(:require))
 
 LOGGER = Logger.new(STDOUT) unless defined? LOGGER
 
-# # timers = Timers::Group.new
+timers = Timers::Group.new
 
-# # every_five_seconds = timers.every(5) { puts "Another 5 seconds" }
+#setup downloader to run every 5 seconds
+every_five_seconds = timers.now_and_every(5) do
+  #download TS files
+  Downloader.download_ts_files()
+end
 
-# # every_ten_seconds = timers.every(10) { puts "10 seconds" }
+# setup Processor.process to run every 10 minutes
+every_ten_minutes = timers.now_and_every(600) do
+  Processor.process()
+end
 
-# # loop { timers.wait }
-# # while true
-
-# #   # # download ts files for archiving
-
-
-# #         # segments = downloader.load_ts_segments()
-# #         # log "segments = #{segments}"
-# #         # destinations = segments.map do |segment_file|
-# #         #   destination = downloader.download_video(segment_file)
-# #         #   Uploader.upload_file_to_minio(destination)
-# #         #   destination
-# #         # end
-# #   #processor
-# #   Processor.process()
-# #   log "sleeping for 30"
-# #   sleep 30
-# # end
+loop { timers.wait }

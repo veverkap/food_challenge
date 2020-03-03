@@ -16,6 +16,16 @@ class Downloader
 
     include LoggingBase
 
+    attr_reader :base_url
+    # Downloads ts files
+    def download_ts_files
+      load_ts_segments().each do |segment|
+        log "segment = #{segment}"
+        destination = download_video(segment)
+        File.delete(destination) if Uploader.upload_file_to_minio(destination)
+      end
+    end
+
     # Loads the m3u8 playlist URL from the [FRAME_URL]
     #
     # @return [String] the playlist url

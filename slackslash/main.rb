@@ -22,6 +22,14 @@ class MainApp < Sinatra::Base
     send_file screenshot, :type => :jpg
   end
 
+  # This endpoint snapshots the feed live and then serves the image
+  get "/tweet" do
+    screenshot = Screenshotter.snapshot(Downloader.playlist_url)
+    tweet = Tweeter.send_tweet(screenshot)
+    File.delete(screenshot)
+    json({url: "#{tweet.url}"})
+  end
+
   # This endpoint handles the [Slack slash command](https://api.slack.com/legacy/custom-integrations/slash-commands)
   post "/" do
     # Slack sends this body encoded (param1=one&param2=two) so we use decode_www_form to decode it
