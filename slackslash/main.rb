@@ -50,6 +50,15 @@ class MainApp < Sinatra::Base
     )
   end
 
+  # IFTTT will post to this endpoint
+  post "/tweetbigtexan" do
+    tweet_url = JSON.parse(request.body.read)["tweet"]
+
+    json(
+      "ok"
+    )
+  end
+
   # This endpoint handles incoming [Slack events](https://api.slack.com/events-api)
   post "/rt_events" do
     json = JSON.load(request.body.read)

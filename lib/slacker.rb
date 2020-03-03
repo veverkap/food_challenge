@@ -5,8 +5,7 @@ class Slacker
   class << self
     include LoggingBase
 
-    KEYWORD = "sweatmeats".freeze
-
+    KEYWORD = ENV["SLACK_KEYWORD"].freeze
     # Parses Slack conversation and acts upon it.
     #
     # @param json [Hash] conversation in Hash format [API Details](https://api.slack.com/events-api)
@@ -15,12 +14,14 @@ class Slacker
       return if event.fetch("subtype", nil) == "bot_message"
 
       text = event.fetch("text", "")
+      log "text = #{text}"
       channel = event.fetch("channel", "#talk-big-texan-debug")
+      log "channel = #{channel}"
       thread_ts = event.fetch("ts", "")
+      log "thread_ts = #{thread_ts}"
 
-      if text.downcase =~ "sweatmeats"
-        downloader = Downloader.new
-        screenshot = Screenshotter.snapshot(downloader.playlist_url)
+      if text.downcase =~ Regexp.new(KEYWORD)
+        screenshot = Screenshotter.snapshot(Downloader.playlist_url)
         link = Uploader.upload_to_imgur(screenshot)
         log "link = #{link}"
         log "deleting #{screenshot}"
@@ -36,6 +37,7 @@ class Slacker
         File.delete(screenshot)
       end
     rescue StandardError => error
+      puts error.backtrace.inspect
       pp error
     end
 
